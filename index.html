@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prince Study Material Portal</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter for a clean, modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<body> 
+
+    <style>
+        /* Base body styles for the entire page */
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            transition: background-image 0.5s ease-in-out, background-color 0.5s ease-in-out, background-blend-mode 0.5s ease-in-out;
+            margin: 0; /* Ensure no default body margin */
+            padding: 0; /* Ensure no default body padding */
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            display: flex; /* Allows children (marquee, login/portal screens) to stack */
+            flex-direction: column; /* Stack children vertically */
+            position: relative; /* Make body a positioning context for absolute children */
+        }
+
+        /* Styles for the login screen background */
+        body.login-background {
+            background-image: url('./images/background_library.jpg'); /* Path to your login background image */
+            background-size: cover;                      /* Make image cover entire screen */
+            background-position: center;                 /* Center the image */
+            background-repeat: no-repeat;                /* Do not repeat */
+            background-attachment: fixed;                /* Keeps image fixed during scroll */
+            background-color: rgba(0, 51, 102, 0.5);     /* Optional: soft overlay color */
+            background-blend-mode: overlay;              /* Blend overlay with image */
+        }
+
+        /* Styles for the portal screen background */
+        body.portal-background {
+            background-image: url('./images/image.png'); /* Portal background */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: #CCFFFF;                   /* Fallback color */
+            background-blend-mode: normal;               /* No blending */
+        }
+
+
+        /* Custom styles for input focus to match theme */
+        input:focus {
+            outline: none;
+            border-color: #667eea; /* Blue from gradient */
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4); /* Soft blue glow */
+        }
+
+        /* Container for the main login content, max-width for readability */
+        #loginScreen {
+            position: absolute; /* Position absolutely within the body */
+            top: 150px; /* Distance from top */
+            right:20px; /* Distance from right (changed from left) */
+            width: 40%; /* Allow content to dictate width, max-w-md handles limit */
+            z-index: 10; /* Ensure it's above the background */
+            padding: 1rem; /* Add padding here for responsive spacing inside the positioned container */
+        }
+        /* Styling for main accordion items (Departments) */
+        .accordion-item {
+            border-radius: 0.75rem; /* rounded-lg from Tailwind */
+            margin-bottom: 1rem;
+            overflow: hidden; /* Ensures rounded corners are applied correctly */
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-lg from Tailwind */
+        }
+        /* Styling for accordion buttons (Department names) */
+        .accordion-button {
+            background-color: #ffffff;
+            color: #1a202c; /* neutral-900 */
+            font-weight: 700; /* font-bold */
+            padding: 1.25rem 1.75rem; /* More padding for a bolder look */
+            text-align: left;
+            width: 100%;
+            border: none;
+            transition: background-color 0.2s ease-in-out;
+            border-radius: 0.75rem; /* Match accordion-item border-radius */
+            position: relative; /* For the arrow icon */
+            display: flex; /* Ensure flex for arrow positioning */
+            align-items: center;
+            justify-content: space-between; /* Space between text and arrow */
+            cursor: pointer; /* Indicate clickable */
+        }
+        /* Arrow icon for buttons */
+        .accordion-button::after {
+            flex-shrink: 0;
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-left: 1rem; /* Space between text and arrow */
+            content: "";
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-size: 1.25rem;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        /* Styling for the accordion button when expanded */
+        .accordion-button.expanded {
+            background-color: #e2e8f0; /* neutral-200 */
+            color: #2b6cb0; /* blue-700 */
+            box-shadow: inset 0 -1px 0 rgba(0,0,0,.125); /* Subtle bottom border */
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        /* Rotate arrow when button is expanded */
+        .accordion-button.expanded::after {
+            transform: rotate(-180deg);
+        }
+        /* Focus state for accessibility */
+        .accordion-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25); /* Blue-500 focus ring */
+        }
+
+        /* Styling for collapsable content sections (accordion-body) */
+        .accordion-body-content {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            transform: scaleY(0.95);
+            padding-top: 0; /* Initial padding top for collapsed state */
+            padding-bottom: 0; /* Initial padding bottom for collapsed state */
+            background-color: #f8fafc; /* neutral-50 */
+            border-top: 1px solid #e2e8f0; /* Separator line */
+            border-bottom-left-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+            visibility: hidden; /* Hide content when collapsed */
+        }
+
+        .accordion-body-content.show {
+            max-height: 1000px; /* A value larger than any possible content height */
+            opacity: 1;
+            transform: scaleY(1);
+            padding: 1.5rem; /* Revert to original padding */
+            visibility: visible; /* Show content when expanded */
+        }
+
+
+        /* Custom styles for nested accordions (Years) */
+        .year-accordion .accordion-item {
+            margin-bottom: 0.75rem; /* Smaller margin for nested items */
+            box-shadow: none; /* No shadow for nested items */
+            border: 1px solid #e2e8f0; /* Light border */
+            border-radius: 0.5rem; /* Slightly smaller border-radius */
+        }
+        .year-accordion .accordion-button {
+            background-color: #f1f5f9; /* Light grey for year buttons */
+            color: #2d3748; /* neutral-800 */
+            font-size: 1.05rem; /* Slightly smaller font for years */
+            font-weight: 600; /* font-semibold */
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+        }
+        .year-accordion .accordion-button.expanded {
+            background-color: #cfd8e5; /* Slightly darker light blue when expanded */
+            color: #2c5282; /* darker blue */
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        .year-accordion .accordion-body-content {
+            background-color: #ffffff; /* White background for semester lists */
+            border-radius: 0.5rem;
+            margin-top: 0; /* Sit flush with the button */
+            border-top: 1px solid #e2e8f0;
+            border-bottom-left-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+        }
+        .year-accordion .accordion-body-content.show {
+            padding: 1rem 1.5rem; /* Adjusted padding for nested accordions */
+        }
+
+        /* Styling for the list of semesters */
+        .list-group-item {
+            background-color: transparent;
+            border: none;
+            padding: 0.6rem 0; /* Smaller padding for list items */
+            font-weight: 500; /* medium */
+        }
+        .list-group-item a {
+            color: #4a5568; /* neutral-700 */
+            text-decoration: none;
+            transition: color 0.2s ease-in-out; /* Smooth hover effect */
+        }
+        .list-group-item a:hover {
+            color: #3b82f6; /* blue-500 on hover */
+            text-decoration: underline; /* Underline on hover */
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 768px) {
+            .accordion-button {
+                padding: 1rem 1.25rem;
+                font-size: 1.125rem; /* text-lg */
+            }
+            .accordion-body-content.show {
+                padding: 1rem;
+            }
+            .year-accordion .accordion-button {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+            .year-accordion .accordion-body-content.show {
+                padding: 0.75rem 1rem;
+            }
+            .list-group-item {
+                padding: 0.5rem 0;
+            }
+            h1 {
+                font-size: 2.5rem; /* md:text-5xl for mobile */
+            }
+            #loginScreen {
+                top: 80px !important;
+                width: 90% !important;
+                right: auto !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                position: relative !important;
+            }
+        }
+/* Portal Content Container - Adjusted Max Width */
+        .portal-content-container {
+            max-width: 700px; /* Decreased width */
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 1rem;
+            padding-top: 2rem;
+        }
+    </style>
+</head>
+<body class="login-background"> <!-- Default to login background -->
+<!-- College Logo in the top-left corner -->
+<!-- College Logo in the top-left corner -->
+<div class="flex items-center justify-center px-4 py-3 space-x-4 bg-white shadow-md w-full">
+  <img src="./images/Prince_Logo.png" alt="College Logo"
+       class="w-12 h-12 md:w-16 md:h-16 rounded-full">
+  <h1 class="text-base sm:text-lg md:text-2xl font-bold text-black text-center leading-tight">
+    Prince Shri Venkateswara Padmavathy Engineering College
+  </h1>
+</div>
+
+
+<br>
+<br>
+        <div id="loginScreen" class="w-auto">
+        <div class="max-w-md bg-white rounded-xl shadow-2xl overflow-hidden">
+            <div class="md:flex">
+                <div class="w-full p-8">
+                    <h2 class="text-3xl font-extrabold text-center text-gray-800 mb-6">Student Login</h2>
+                    <p class="text-center text-gray-600 mb-8">Access your study materials</p>
+
+                    <form id="loginForm" class="space-y-6">
+                        <!-- Email Input Section -->
+                        <div id="emailSection">
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                <input type="email" id="email" name="email" placeholder="your_email@psvpec.in"
+                                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                       required>
+                            </div>
+                            <!-- Error Message Display for Email -->
+                            <div id="emailErrorMessage" class="text-red-600 text-sm font-semibold text-center mt-2 hidden">
+                                <!-- Error message will be inserted here by JavaScript -->
+                            </div>
+                            <button type="button" id="accessPortalButton"
+                                    class="w-full flex justify-center py-3 px-4 mt-6 border border-transparent rounded-md shadow-sm text-lg font-semibold text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition ease-in-out duration-150">
+                                Access Portal
+                            </button>
+                        </div>
+                        
+                        <div class="text-center mt-6">
+                            <a href="#" class="text-sm font-medium text-amber-500 hover:text-amber-500">
+                                Having trouble? Contact Support
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Study Material Portal Section (Initially hidden) -->
+    <div id="portalScreen" class="hidden p-4 max-w-5xl mx-auto">
+        <!-- Main title of the portal -->
+        <h1 class="text-xl md:text-2xl font-semibold text-white text-center px-6 py-3 bg-gradient-to-r from-indigo-700 to-sky-600 backdrop-blur-sm rounded-lg shadow-md w-full max-w-3xl mx-auto mt-6">
+        PRINCE EDU PORTAL
+        </h1>
+
+
+
+        <br>
+
+        <!-- Main Accordion for Departments -->
+        <div class="accordion" id="departmentsAccordion">
+            <!-- IT Department Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingIT">
+                    <button class="accordion-button" type="button" data-target="#collapseIT" data-parent-accordion="#departmentsAccordion">
+                        <span class="text-xl">Information Technology (IT)</span>
+                    </button>
+                </h2>
+                <div id="collapseIT" class="accordion-body-content">
+                    <div class="year-accordion" id="itYearsAccordion">
+                        <!-- IT - Year 1 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingITYear1">
+                                <button class="accordion-button" type="button" data-target="#collapseITYear1">
+                                    Year 1
+                                </button>
+                            </h2>
+                            <div id="collapseITYear1" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="https://drive.google.com/drive/folders/1ixKJyjpUT6X6OLrxcpOP7XYzMqW7dtyg?usp=drive_link">SEM1 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="https://drive.google.com/drive/folders/19rUM_C91CrWZlafMLzhhWTJJ5_foICaf?usp=drive_link">SEM2 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- IT - Year 2 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingITYear2">
+                                <button class="accordion-button" type="button" data-target="#collapseITYear2">
+                                    Year 2
+                                </button>
+                            </h2>
+                            <div id="collapseITYear2" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="https://drive.google.com/drive/folders/1x8Ltkln1dMnBUw48Tx0LgtY4ycm9PFq6?usp=drive_link">SEM3 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="https://drive.google.com/drive/folders/17fUS7YzfL001mcFGnRAUtTWihcz7F_qW?usp=drive_link">SEM4 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- IT - Year 3 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingITYear3">
+                                <button class="accordion-button" type="button" data-target="#collapseITYear3">
+                                    Year 3
+                                </button>
+                            </h2>
+                            <div id="collapseITYear3" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM5 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM6 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- IT - Year 4 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingITYear4">
+                                <button class="accordion-button" type="button" data-target="#collapseITYear4">
+                                    Year 4
+                                </button>
+                            </h2>
+                            <div id="collapseITYear4" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM7 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM8 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CSE Department Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingCSE">
+                    <button class="accordion-button" type="button" data-target="#collapseCSE" data-parent-accordion="#departmentsAccordion">
+                        <span class="text-xl">Computer Science and Engineering (CSE)</span>
+                    </button>
+                </h2>
+                <div id="collapseCSE" class="accordion-body-content">
+                    <div class="year-accordion" id="cseYearsAccordion">
+                        <!-- CSE - Year 1 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingCSEYear1">
+                                <button class="accordion-button" type="button" data-target="#collapseCSEYear1">
+                                    Year 1
+                                </button>
+                            </h2>
+                            <div id="collapseCSEYear1" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="https://drive.google.com/drive/folders/1MbuFFeOgjifGSdg-W6enhZIg63pYjQ6i?usp=drive_link">SEM1 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="https://drive.google.com/drive/folders/1n0pWP1LXsygIH8R0qiQr_b9HahJaMEcU?usp=drive_link">SEM2 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- CSE - Year 2 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingCSEYear2">
+                                <button class="accordion-button" type="button" data-target="#collapseCSEYear2">
+                                    Year 2
+                                </button>
+                            </h2>
+                            <div id="collapseCSEYear2" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="https://drive.google.com/drive/folders/1lqT8TdyUjvWfQ52pTpynHSoTg6bx0tsc?usp=drive_link">SEM3 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="https://drive.google.com/drive/folders/1VT6GGgLqcto3i1o2S_UJj7I-SIwHxz6u?usp=drive_link">SEM4 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- CSE - Year 3 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingCSEYear3">
+                                <button class="accordion-button" type="button" data-target="#collapseCSEYear3">
+                                    Year 3
+                                </button>
+                            </h2>
+                            <div id="collapseCSEYear3" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM5 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM6 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- CSE - Year 4 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingCSEYear4">
+                                <button class="accordion-button" type="button" data-target="#collapseCSEYear4">
+                                    Year 4
+                                </button>
+                            </h2>
+                            <div id="collapseCSEYear4" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM7 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM8 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ECE Department Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingECE">
+                    <button class="accordion-button" type="button" data-target="#collapseECE" data-parent-accordion="#departmentsAccordion">
+                        <span class="text-xl">Electronics and Communication Engineering (ECE)</span>
+                    </button>
+                </h2>
+                <div id="collapseECE" class="accordion-body-content">
+                    <div class="year-accordion" id="eceYearsAccordion">
+                        <!-- ECE - Year 1 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingECEYear1">
+                                <button class="accordion-button" type="button" data-target="#collapseECEYear1">
+                                    Year 1
+                                </button>
+                            </h2>
+                            <div id="collapseECEYear1" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM1 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM2 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- ECE - Year 2 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingECEYear2">
+                                <button class="accordion-button" type="button" data-target="#collapseECEYear2">
+                                    Year 2
+                                </button>
+                            </h2>
+                            <div id="collapseECEYear2" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM3 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM4 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- ECE - Year 3 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingECEYear3">
+                                <button class="accordion-button" type="button" data-target="#collapseECEYear3">
+                                    Year 3
+                                </button>
+                            </h2>
+                            <div id="collapseECEYear3" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM5 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM6 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- ECE - Year 4 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingECEYear4">
+                                <button class="accordion-button" type="button" data-target="#collapseECEYear4">
+                                    Year 4
+                                </button>
+                            </h2>
+                            <div id="collapseECEYear4" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM7 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM8 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EEE Department Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingEEE">
+                    <button class="accordion-button" type="button" data-target="#collapseEEE" data-parent-accordion="#departmentsAccordion">
+                        <span class="text-xl">Electrical and Electronics Engineering (EEE)</span>
+                    </button>
+                </h2>
+                <div id="collapseEEE" class="accordion-body-content">
+                    <div class="year-accordion" id="eeeYearsAccordion">
+
+                        <!-- EEE - Year 1 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingEEEYear1">
+                                <button class="accordion-button" type="button" data-target="#collapseEEEYear1">
+                                    Year 1
+                                </button>
+                            </h2>
+                            <div id="collapseEEEYear1" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM1 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM2 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- EEE - Year 2 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingEEEYear2">
+                                <button class="accordion-button" type="button" data-target="#collapseEEEYear2">
+                                    Year 2
+                                </button>
+                            </h2>
+                            <div id="collapseEEEYear2" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM3 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM4 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- EEE - Year 3 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingEEEYear3">
+                                <button class="accordion-button" type="button" data-target="#collapseEEEYear3">
+                                    Year 3
+                                </button>
+                            </h2>
+                            <div id="collapseEEEYear3" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM5 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM6 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- EEE - Year 4 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingEEEYear4">
+                                <button class="accordion-button" type="button" data-target="#collapseEEEYear4">
+                                    Year 4
+                                </button>
+                            </h2>
+                            <div id="collapseEEEYear4" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM7 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM8 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CIVIL Department Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingCIVIL">
+                    <button class="accordion-button" type="button" data-target="#collapseCIVIL" data-parent-accordion="#departmentsAccordion">
+                        <span class="text-xl">Civil Engineering (CIVIL)</span>
+                    </button>
+                </h2>
+                <div id="collapseCIVIL" class="accordion-body-content">
+                    <div class="year-accordion" id="civilYearsAccordion">
+                        <!-- CIVIL - Year 1 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingCIVILYear1">
+                                <button class="accordion-button" type="button" data-target="#collapseCIVILYear1">
+                                    Year 1
+                                </button>
+                            </h2>
+                            <div id="collapseCIVILYear1" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM1 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM2 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- CIVIL - Year 2 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingCIVILYear2">
+                                <button class="accordion-button" type="button" data-target="#collapseCIVILYear2">
+                                    Year 2
+                                </button>
+                            </h2>
+                            <div id="collapseCIVILYear2" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM3 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM4 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- CIVIL - Year 3 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingCIVILYear3">
+                                <button class="accordion-button" type="button" data-target="#collapseCIVILYear3">
+                                    Year 3
+                                </button>
+                            </h2>
+                            <div id="collapseCIVILYear3" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM5 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM6 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- CIVIL - Year 4 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingCIVILYear4">
+                                <button class="accordion-button" type="button" data-target="#collapseCIVILYear4">
+                                    Year 4
+                                </button>
+                            </h2>
+                            <div id="collapseCIVILYear4" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM7 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM8 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MECH Department Section -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingMECH">
+                    <button class="accordion-button" type="button" data-target="#collapseMECH" data-parent-accordion="#departmentsAccordion">
+                        <span class="text-xl">Mechanical Engineering (MECH)</span>
+                    </button>
+                </h2>
+                <div id="collapseMECH" class="accordion-body-content">
+                    <div class="year-accordion" id="mechYearsAccordion">
+                        <!-- MECH - Year 1 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingMECHYear1">
+                                <button class="accordion-button" type="button" data-target="#collapseMECHYear1">
+                                    Year 1
+                                </button>
+                            </h2>
+                            <div id="collapseMECHYear1" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM1 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM2 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- MECH - Year 2 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingMECHYear2">
+                                <button class="accordion-button" type="button" data-target="#collapseMECHYear2">
+                                    Year 2
+                                </button>
+                            </h2>
+                            <div id="collapseMECHYear2" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM3 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM4 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- MECH - Year 3 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingMECHYear3">
+                                <button class="accordion-button" type="button" data-target="#collapseMECHYear3">
+                                    Year 3
+                                </button>
+                            </h2>
+                            <div id="collapseMECHYear3" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM5 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM6 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- MECH - Year 4 -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingMECHYear4">
+                                <button class="accordion-button" type="button" data-target="#collapseMECHYear4">
+                                    Year 4
+                                </button>
+                            </h2>
+                            <div id="collapseMECHYear4" class="accordion-body-content">
+                                <ul class="list-group">
+                                    <li class="list-group-item"><a href="#">SEM7 - Google Drive Link</a></li>
+                                    <li class="list-group-item"><a href="#">SEM8 - Google Drive Link</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Combined JavaScript for Login and Accordion Functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const body = document.body;
+            const loginScreen = document.getElementById('loginScreen');
+            const portalScreen = document.getElementById('portalScreen');
+
+            const emailInput = document.getElementById('email');
+            const accessPortalButton = document.getElementById('accessPortalButton');
+            const emailErrorMessage = document.getElementById('emailErrorMessage');
+            
+            const REQUIRED_DOMAIN = '@psvpec.in';
+
+            // --- Login Logic ---
+            accessPortalButton.addEventListener('click', () => {
+                const email = emailInput.value.trim();
+                emailErrorMessage.classList.add('hidden'); // Hide any previous email error
+
+                if (!email) {
+                    emailErrorMessage.textContent = 'Please enter your email address.';
+                    emailErrorMessage.classList.remove('hidden');
+                    return;
+                }
+
+                // Validate email domain: THIS IS WHERE IT CHECKS FOR @psvpec.in
+                if (email.endsWith(REQUIRED_DOMAIN)) {
+                    console.log('Email domain valid! Transitioning to study material portal...');
+                    // Hide login screen, show portal screen
+                    loginScreen.classList.add('hidden');
+                    portalScreen.classList.remove('hidden');
+                    // Change body background for portal
+                    body.classList.remove('login-background');
+                    body.classList.add('portal-background');
+                } else {
+                    emailErrorMessage.textContent = `Invalid email domain. Please use ${REQUIRED_DOMAIN}`;
+                    emailErrorMessage.classList.remove('hidden');
+                }
+            });
+
+            // --- Accordion Logic (Copied from the study material portal file) ---
+            const accordionButtons = document.querySelectorAll('.accordion-button');
+
+            accordionButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetId = button.dataset.target; // Get the ID of the content to toggle
+                    const targetContent = document.querySelector(targetId);
+
+                    if (!targetContent) {
+                        console.error(`Target content not found for ID: ${targetId}`);
+                        return;
+                    }
+
+                    // Check if this button belongs to the main (department) accordion, which has `data-parent-accordion`
+                    const parentAccordionId = button.dataset.parentAccordion;
+
+                    if (parentAccordionId) {
+                        // This is a top-level department button
+                        const parentAccordion = document.querySelector(parentAccordionId);
+                        if (parentAccordion) {
+                            // Close all other open department sections
+                            const allDepartmentContents = parentAccordion.querySelectorAll('.accordion-body-content');
+                            allDepartmentContents.forEach(content => {
+                                if (content !== targetContent && content.classList.contains('show')) {
+                                    content.classList.remove('show');
+                                    // Also remove 'expanded' from its corresponding button
+                                    const associatedButton = content.previousElementSibling.querySelector('.accordion-button');
+                                    if (associatedButton) {
+                                        associatedButton.classList.remove('expanded');
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    // Toggle the 'show' class on the target content for collapse/expand
+                    targetContent.classList.toggle('show');
+                    // Toggle the 'expanded' class on the button itself for styling (e.g., arrow rotation)
+                    button.classList.toggle('expanded');
+
+                    // Update aria-expanded attribute for accessibility
+                    const isExpanded = targetContent.classList.contains('show');
+                    button.setAttribute('aria-expanded', isExpanded);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
